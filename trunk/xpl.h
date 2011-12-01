@@ -1,5 +1,7 @@
 /**
- * Author: Tony, hellotony521@gmail.com
+ * Author: paladin_t, hellotony521@gmail.com
+ * Created: Oct. 14, 2011
+ * Last edited: Dec. 1, 2011
  *
  * This program is free software. It comes without any warranty, to
  * the extent permitted by applicable law. You can redistribute it
@@ -31,6 +33,13 @@ extern "C" {
 ** {========================================================
 ** Macros and typedefines
 */
+
+#ifndef XPLVER
+#  define XPLVER_MAJOR	1
+#  define XPLVER_MINOR	0
+#  define XPLVER_PATCH	2
+#  define XPLVER ((XPLVER_MAJOR << 24) | (XPLVER_MINOR << 16) | (XPLVER_PATCH))
+#endif /* XPLVER */
 
 #ifndef XPLINTERNAL
 #  define XPLINTERNAL static
@@ -83,7 +92,11 @@ extern "C" {
  * @brief Skip meaningless parts, like comment and blank.
  */
 #ifndef SKIP_MEANINGLESS
-#  define SKIP_MEANINGLESS(s) _xpl_trim(&(s)->cursor); if(xpl_skip_comment(s) == XS_OK) _xpl_trim(&(s)->cursor)
+#  define SKIP_MEANINGLESS(s) \
+  do { \
+    while(_xpl_is_squote(*(unsigned char*)_s->cursor) || _xpl_is_blank(*(unsigned char*)_s->cursor)) { \
+      _xpl_trim(&(s)->cursor); if(xpl_skip_comment(s) == XS_OK) _xpl_trim(&(s)->cursor); } \
+  } while(0)
 #endif /* SKIP_MEANINGLESS */
 
 /**
@@ -160,6 +173,7 @@ typedef struct xpl_context_t {
 ** {========================================================
 ** Function declarations
 */
+
 /**
  * @brief Opens an XPL context
  *
@@ -384,7 +398,7 @@ XPLINTERNAL int _xpl_is_seperator(unsigned char _c);
 /**
  * @brief Trims extra chars
  *
- * @param[in/out] - String to be trimmed
+ * @param[in][out] - String to be trimmed
  * @return - Returns count of trimmed chars
  */
 XPLINTERNAL int _xpl_trim(const char** _c);
@@ -396,15 +410,6 @@ XPLINTERNAL int _xpl_trim(const char** _c);
  * @return - Returns 1 if _s > _d, -1 if _s < _d, 0 if _s = _d
  */
 XPLINTERNAL int _xpl_strcmp(const char* _s, const char* _d);
-/**
- * @brief Copies source string to destination
- *
- * @param[out] _d - Destination buffer
- * @param[in] _s  - Source string
- * @param[in] _l  - Size of destination buffer
- * @return - Returns count of copied chars
- */
-XPLINTERNAL int _xpl_strcpy(char* _d, const char* _s, int _l);
 /**
  * @brief Compires scripting programming interface information in quick sorting
  *
@@ -560,15 +565,15 @@ XPLAPI xpl_status_t xpl_pop_string(xpl_context_t* _s, char* _o, int _l) {
   xpl_assert(_s && _s->text && _o);
   src = _s->cursor;
   dst = _o;
-  if(_xpl_is_dquote(*(unsigned char *)src)) {
+  if(_xpl_is_dquote(*(unsigned char*)src)) {
     src++;
-    while(!_xpl_is_dquote(*(unsigned char *)src)) {
+    while(!_xpl_is_dquote(*(unsigned char*)src)) {
       *dst++ = *src++;
       if(dst + 1 - _o > _l) return XS_NO_ENOUGH_BUFFER_SIZE;
     }
     src++;
   } else {
-    while(!_xpl_is_seperator(*(unsigned char *)src)) {
+    while(!_xpl_is_seperator(*(unsigned char*)src)) {
       *dst++ = *src++;
       if(dst + 1 - _o > _l) return XS_NO_ENOUGH_BUFFER_SIZE;
     }
@@ -712,22 +717,11 @@ XPLINTERNAL int _xpl_trim(const char** _c) {
 
 XPLINTERNAL int _xpl_strcmp(const char* _s, const char* _d) {
   int ret = 0;
-  while(!(ret = (_xpl_is_seperator(*(unsigned char *)_s) ? '\0' : *(unsigned char *)_s) - *(unsigned char *)_d) && *_d) {
+  while(!(ret = (_xpl_is_seperator(*(unsigned char*)_s) ? '\0' : *(unsigned char*)_s) - *(unsigned char*)_d) && *_d) {
     _s++; _d++;
   }
   if(ret < 0) ret = -1;
   else if(ret > 0) ret = 1;
-
-  return ret;
-}
-
-XPLINTERNAL int _xpl_strcpy(char* _d, const char* _s, int _l) {
-  int ret = 0;
-  char* dst = _d;
-  while(*dst++ = *_s++) {
-    if(dst + 1 - _d > _l) return -1;
-    else ret++;
-  }
 
   return ret;
 }
