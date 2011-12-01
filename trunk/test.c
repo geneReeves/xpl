@@ -1,5 +1,7 @@
 /**
- * Author: Tony, hellotony521@gmail.com
+ * Author: paladin_t, hellotony521@gmail.com
+ * Created: Oct. 14, 2011
+ * Last edited: Oct. 15, 2011
  *
  * This program is free software. It comes without any warranty, to
  * the extent permitted by applicable law. You can redistribute it
