@@ -491,7 +491,7 @@ XPLAPI xpl_status_t xpl_peek_func(xpl_context_t* _s, xpl_func_info_t** _f) {
   if(_xpl_is_comma(*(unsigned char*)_s->cursor)) {
     _s->cursor++;
   } else {
-    func = bsearch(_s->cursor, _s->funcs, _s->funcs_count, sizeof(xpl_func_info_t), _xpl_func_info_sch_cmp);
+    func = (xpl_func_info_t*)bsearch(_s->cursor, _s->funcs, _s->funcs_count, sizeof(xpl_func_info_t), _xpl_func_info_sch_cmp);
     if(!func) return XS_ERR;
     *_f = func;
   }
@@ -503,11 +503,11 @@ XPLAPI xpl_status_t xpl_step(xpl_context_t* _s) {
   xpl_status_t ret = XS_OK;
   xpl_func_info_t* func = NULL;
   xpl_assert(_s && _s->text);
-  if(ret = xpl_peek_func(_s, &func) != XS_OK) return ret;
+  if((ret = xpl_peek_func(_s, &func)) != XS_OK) return ret;
   if(!func) return ret;
   _s->cursor += strlen(func->name);
   SKIP_MEANINGLESS(_s);
-  if(ret = func->func(_s) != XS_OK) return ret;
+  if((ret = func->func(_s)) != XS_OK) return ret;
 
   return ret;
 }
@@ -530,6 +530,7 @@ XPLAPI xpl_status_t xpl_has_param(xpl_context_t* _s) {
   xpl_func_info_t* func = NULL;
   xpl_assert(_s && _s->text);
   SKIP_MEANINGLESS(_s);
+  if(_s->cursor[0] == '\0') return XS_NO_PARAM;
   xpl_peek_func(_s, &func);
 
   return ((_xpl_is_comma(*(unsigned char*)_s->cursor) || func) ? XS_NO_PARAM : XS_OK);
@@ -540,7 +541,7 @@ XPLAPI xpl_status_t xpl_pop_int(xpl_context_t* _s, int* _o) {
   char* conv_suc = NULL;
   char buf[32] = { '\0' };
   xpl_assert(_s && _s->text && _o);
-  if(ret = xpl_pop_string(_s, buf, sizeof(buf)) != XS_OK) return ret;
+  if((ret = xpl_pop_string(_s, buf, sizeof(buf))) != XS_OK) return ret;
   *_o = (int)strtol(buf, &conv_suc, 0);
   if(*conv_suc != '\0') ret = XS_PARAM_TYPE_ERROR;
 
@@ -552,7 +553,7 @@ XPLAPI xpl_status_t xpl_pop_float(xpl_context_t* _s, float* _o) {
   char* conv_suc = NULL;
   char buf[32] = { '\0' };
   xpl_assert(_s && _s->text && _o);
-  if(ret = xpl_pop_string(_s, buf, sizeof(buf)) != XS_OK) return ret;
+  if((ret = xpl_pop_string(_s, buf, sizeof(buf))) != XS_OK) return ret;
   *_o = (float)strtod(buf, &conv_suc);
   if(*conv_suc != '\0') ret = XS_PARAM_TYPE_ERROR;
 
@@ -579,6 +580,8 @@ XPLAPI xpl_status_t xpl_pop_string(xpl_context_t* _s, char* _o, int _l) {
     }
   }
   _s->cursor = src;
+  if(dst + 1 - _o > _l) return XS_NO_ENOUGH_BUFFER_SIZE;
+  *dst++ = '\0';
 
   return XS_OK;
 }
@@ -609,15 +612,15 @@ XPLINTERNAL xpl_status_t _xpl_core_then(xpl_context_t* _s) {
     _s->bool_value = 0;
     _s->bool_composing = XBC_NIL;
     do {
-      if(ret = xpl_peek_func(_s, &func) != XS_OK) return ret;
+      if((ret = xpl_peek_func(_s, &func)) != XS_OK) return ret;
       if(!func) continue;
       if(func->func == _xpl_core_elseif || func->func == _xpl_core_else || func->func == _xpl_core_endif) break;
       _s->cursor += strlen(func->name);
       SKIP_MEANINGLESS(_s);
-      if(ret = func->func(_s) != XS_OK) return ret;
+      if((ret = func->func(_s)) != XS_OK) return ret;
     } while(*_s->cursor);
     do {
-      if(ret = xpl_peek_func(_s, &func) != XS_OK) return ret;
+      if((ret = xpl_peek_func(_s, &func)) != XS_OK) return ret;
       if(!func) continue;
       _s->cursor += strlen(func->name);
       if(func->func == _xpl_core_endif) break;
