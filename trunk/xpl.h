@@ -1,7 +1,7 @@
 /**
  * Author: paladin_t, hellotony521@gmail.com
  * Created: Oct. 14, 2011
- * Last edited: Dec. 1, 2011
+ * Last edited: Dec. 2, 2011
  *
  * This program is free software. It comes without any warranty, to
  * the extent permitted by applicable law. You can redistribute it
@@ -37,7 +37,7 @@ extern "C" {
 #ifndef XPLVER
 #  define XPLVER_MAJOR	1
 #  define XPLVER_MINOR	0
-#  define XPLVER_PATCH	2
+#  define XPLVER_PATCH	3
 #  define XPLVER ((XPLVER_MAJOR << 24) | (XPLVER_MINOR << 16) | (XPLVER_PATCH))
 #endif /* XPLVER */
 
