@@ -1,7 +1,7 @@
 /**
  * Author: paladin_t, hellotony521@gmail.com
  * Created: Oct. 14, 2011
- * Last edited: Oct. 15, 2011
+ * Last edited: Dec. 18, 2011
  *
  * This program is free software. It comes without any warranty, to
  * the extent permitted by applicable law. You can redistribute it
@@ -13,10 +13,10 @@
 #include "xpl.h"
 
 xpl_status_t test1(xpl_context_t* _s) {
-  float f = 0.0f;
+  double f = 0.0;
   printf("test1\n");
   if(xpl_has_param(_s) == XS_OK) {
-    xpl_pop_float(_s, &f);
+    xpl_pop_double(_s, &f);
     printf("has_param %f\n", f);
   }
 

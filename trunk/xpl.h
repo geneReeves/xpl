@@ -1,7 +1,7 @@
 /**
  * Author: paladin_t, hellotony521@gmail.com
  * Created: Oct. 14, 2011
- * Last edited: Dec. 2, 2011
+ * Last edited: Dec. 18, 2011
  *
  * This program is free software. It comes without any warranty, to
  * the extent permitted by applicable law. You can redistribute it
@@ -37,7 +37,7 @@ extern "C" {
 #ifndef XPLVER
 #  define XPLVER_MAJOR	1
 #  define XPLVER_MINOR	0
-#  define XPLVER_PATCH	3
+#  define XPLVER_PATCH	4
 #  define XPLVER ((XPLVER_MAJOR << 24) | (XPLVER_MINOR << 16) | (XPLVER_PATCH))
 #endif /* XPLVER */
 
@@ -89,7 +89,7 @@ extern "C" {
 #endif /* XPL_FUNC_REGISTER */
 
 /**
- * @brief Skip meaningless parts, like comment and blank.
+ * @brief Skip meaningless parts, such as comment and blank.
  */
 #ifndef SKIP_MEANINGLESS
 #  define SKIP_MEANINGLESS(s) \
@@ -117,9 +117,9 @@ typedef enum xpl_status_t {
  * @brief Boolean value composing type
  */
 typedef enum xpl_bool_composing_t {
-  XBC_NIL, /**< Assign new value directly */
-  XBC_OR,  /**< Old value OR new value */
-  XBC_AND, /**< Old value AND new value */
+  XBC_NIL, /**< Assign with a new value directly */
+  XBC_OR,  /**< Compose and assign old value OR a new value */
+  XBC_AND, /**< Compose and assign old value AND a new value */
 } xpl_bool_composing_t;
 
 struct xpl_context_t;
@@ -241,28 +241,28 @@ XPLAPI xpl_status_t xpl_step(xpl_context_t* _s);
  */
 XPLAPI xpl_status_t xpl_skip_comment(xpl_context_t* _s);
 /**
- * @brief Determines whether current XPL context contains a parameter
+ * @brief Determines whether there's a parameter in current XPL context at cursor
  *
  * @param[in] _s - XPL context
- * @return - Returns execution status, XS_OK if has param, or XS_NO_PARAM if does not.
+ * @return - Returns execution status, XS_OK if there's a parameter, or XS_NO_PARAM if there's not.
  */
 XPLAPI xpl_status_t xpl_has_param(xpl_context_t* _s);
 /**
- * @brief Pops a integer parameter from XPL context
+ * @brief Pops a long integer parameter from XPL context
  *
  * @param[in] _s  - XPL context
  * @param[out] _o - Destination buffer
  * @return - Returns execution status
  */
-XPLAPI xpl_status_t xpl_pop_int(xpl_context_t* _s, int* _o);
+XPLAPI xpl_status_t xpl_pop_long(xpl_context_t* _s, long* _o);
 /**
- * @brief Pops a float parameter from XPL context
+ * @brief Pops a double float parameter from XPL context
  *
  * @param[in] _s  - XPL context
  * @param[out] _o - Destination buffer
  * @return - Returns execution status
  */
-XPLAPI xpl_status_t xpl_pop_float(xpl_context_t* _s, float* _o);
+XPLAPI xpl_status_t xpl_pop_double(xpl_context_t* _s, double* _o);
 /**
  * @brief Pops a string parameter from XPL context
  *
@@ -536,25 +536,25 @@ XPLAPI xpl_status_t xpl_has_param(xpl_context_t* _s) {
   return ((_xpl_is_comma(*(unsigned char*)_s->cursor) || func) ? XS_NO_PARAM : XS_OK);
 }
 
-XPLAPI xpl_status_t xpl_pop_int(xpl_context_t* _s, int* _o) {
+XPLAPI xpl_status_t xpl_pop_long(xpl_context_t* _s, long* _o) {
   xpl_status_t ret = XS_OK;
   char* conv_suc = NULL;
   char buf[32] = { '\0' };
   xpl_assert(_s && _s->text && _o);
   if((ret = xpl_pop_string(_s, buf, sizeof(buf))) != XS_OK) return ret;
-  *_o = (int)strtol(buf, &conv_suc, 0);
+  *_o = strtol(buf, &conv_suc, 0);
   if(*conv_suc != '\0') ret = XS_PARAM_TYPE_ERROR;
 
   return ret;
 }
 
-XPLAPI xpl_status_t xpl_pop_float(xpl_context_t* _s, float* _o) {
+XPLAPI xpl_status_t xpl_pop_double(xpl_context_t* _s, double* _o) {
   xpl_status_t ret = XS_OK;
   char* conv_suc = NULL;
   char buf[32] = { '\0' };
   xpl_assert(_s && _s->text && _o);
   if((ret = xpl_pop_string(_s, buf, sizeof(buf))) != XS_OK) return ret;
-  *_o = (float)strtod(buf, &conv_suc);
+  *_o = strtod(buf, &conv_suc);
   if(*conv_suc != '\0') ret = XS_PARAM_TYPE_ERROR;
 
   return ret;
