@@ -1,7 +1,7 @@
 /**
  * Author: paladin_t, hellotony521@gmail.com
  * Created: Oct. 14, 2011
- * Last edited: Dec. 18, 2011
+ * Last edited: Feb. 17, 2012
  *
  * This program is free software. It comes without any warranty, to
  * the extent permitted by applicable law. You can redistribute it
@@ -37,7 +37,7 @@ extern "C" {
 #ifndef XPLVER
 #  define XPLVER_MAJOR	1
 #  define XPLVER_MINOR	0
-#  define XPLVER_PATCH	4
+#  define XPLVER_PATCH	5
 #  define XPLVER ((XPLVER_MAJOR << 24) | (XPLVER_MINOR << 16) | (XPLVER_PATCH))
 #endif /* XPLVER */
 
@@ -140,6 +140,14 @@ typedef struct xpl_func_info_t {
 } xpl_func_info_t;
 
 /**
+ * @brief Separator determination functor
+ *
+ * @param[in] _c - Charactor to be determinated
+ * @return - Returns non-zero if separator determinated
+ */
+typedef int (* xpl_is_separator_func)(unsigned char _c);
+
+/**
  * @brief XPL context structure
  */
 typedef struct xpl_context_t {
@@ -164,7 +172,14 @@ typedef struct xpl_context_t {
     xpl_bool_composing_t bool_composing; /**< Boolean value composing type */
     int bool_value;                      /**< Current boolean value */
   };
-  void* userdata; /**< Pointer to user defined data */
+  /**
+   * @brief Separator determination functor
+   */
+  xpl_is_separator_func separator_detect;
+  /**
+   * @brief Pointer to user defined data
+   */
+  void* userdata;
 } xpl_context_t;
 
 /* ========================================================} */
@@ -177,10 +192,12 @@ typedef struct xpl_context_t {
 /**
  * @brief Opens an XPL context
  *
- * @param[in] _s - XPL context
+ * @param[in] _s  - XPL context
+ * @param[in] _f  - Pointer to XPL scripting interface array
+ * @param[in] _is - Separator determination functor
  * @return - Returns execution status
  */
-XPLAPI xpl_status_t xpl_open(xpl_context_t* _s, xpl_func_info_t* _f);
+XPLAPI xpl_status_t xpl_open(xpl_context_t* _s, xpl_func_info_t* _f, xpl_is_separator_func _is);
 /**
  * @brief Closes an XPL context
  *
@@ -389,12 +406,13 @@ XPLINTERNAL int _xpl_is_colon(unsigned char _c);
  */
 XPLINTERNAL int _xpl_is_blank(unsigned char _c);
 /**
- * @brief Determines whether a char is a seperator
+ * @brief Determines whether a char is a separator
  *
- * @param[in] _c - Char to be determined
+ * @param[in] _c  - Char to be determined
+ * @param[in] _is - Separator determination functor
  * @return Returns non-zero if matching
  */
-XPLINTERNAL int _xpl_is_seperator(unsigned char _c);
+XPLINTERNAL int _xpl_is_separator(unsigned char _c, xpl_is_separator_func _is);
 /**
  * @brief Trims extra chars
  *
@@ -434,13 +452,14 @@ XPLINTERNAL int _xpl_func_info_sch_cmp(const void* _k, const void* _i);
 ** Function definitions
 */
 
-XPLAPI xpl_status_t xpl_open(xpl_context_t* _s, xpl_func_info_t* _f) {
+XPLAPI xpl_status_t xpl_open(xpl_context_t* _s, xpl_func_info_t* _f, xpl_is_separator_func _is) {
   xpl_assert(_s && _f);
   memset(_s, 0, sizeof(xpl_context_t));
   _s->funcs = _f;
   while(_f[_s->funcs_count].name && _f[_s->funcs_count].func)
     _s->funcs_count++;
   qsort(_f, _s->funcs_count, sizeof(xpl_func_info_t), _xpl_func_info_srt_cmp);
+  _s->separator_detect = _is;
 
   return XS_OK;
 }
@@ -574,7 +593,7 @@ XPLAPI xpl_status_t xpl_pop_string(xpl_context_t* _s, char* _o, int _l) {
     }
     src++;
   } else {
-    while(!_xpl_is_seperator(*(unsigned char*)src)) {
+    while(!_xpl_is_separator(*(unsigned char*)src, _s->separator_detect)) {
       *dst++ = *src++;
       if(dst + 1 - _o > _l) return XS_NO_ENOUGH_BUFFER_SIZE;
     }
@@ -701,10 +720,11 @@ XPLINTERNAL int _xpl_is_blank(unsigned char _c) {
   return _c == ' ' || _c == '\t' || _c == '\r' || _c == '\n';
 }
 
-XPLINTERNAL int _xpl_is_seperator(unsigned char _c) {
+XPLINTERNAL int _xpl_is_separator(unsigned char _c, xpl_is_separator_func _is) {
   return _xpl_is_blank(_c) || _xpl_is_comma(_c) ||
     _xpl_is_exclamation(_c) || _xpl_is_colon(_c) ||
-    _xpl_is_squote(_c) || _xpl_is_dquote(_c);
+    _xpl_is_squote(_c) || _xpl_is_dquote(_c) ||
+	(_is ? _is(_c) : 0);
 }
 
 XPLINTERNAL int _xpl_trim(const char** _c) {
@@ -720,7 +740,7 @@ XPLINTERNAL int _xpl_trim(const char** _c) {
 
 XPLINTERNAL int _xpl_strcmp(const char* _s, const char* _d) {
   int ret = 0;
-  while(!(ret = (_xpl_is_seperator(*(unsigned char*)_s) ? '\0' : *(unsigned char*)_s) - *(unsigned char*)_d) && *_d) {
+  while(!(ret = (_xpl_is_separator(*(unsigned char*)_s, NULL) ? '\0' : *(unsigned char*)_s) - *(unsigned char*)_d) && *_d) {
     _s++; _d++;
   }
   if(ret < 0) ret = -1;
