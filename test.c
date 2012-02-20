@@ -1,7 +1,7 @@
 /**
  * Author: paladin_t, hellotony521@gmail.com
  * Created: Oct. 14, 2011
- * Last edited: Dec. 18, 2011
+ * Last edited: Feb. 17, 2012
  *
  * This program is free software. It comes without any warranty, to
  * the extent permitted by applicable law. You can redistribute it
@@ -65,7 +65,7 @@ int main() {
     XPL_FUNC_ADD("cond1", cond1)
   XPL_FUNC_END
 
-  xpl_open(&xpl, funcs);
+  xpl_open(&xpl, funcs, NULL);
     xpl_load(&xpl, "if cond1 then test1 3.14 elseif cond2 then test2 \"hello world\" else test3 endif");
     xpl_run(&xpl);
     xpl_unload(&xpl);
