@@ -1,7 +1,7 @@
 /**
  * Author: paladin_t, hellotony521@gmail.com
  * Created: Oct. 14, 2011
- * Last edited: Feb. 17, 2012
+ * Last edited: Feb. 23, 2012
  *
  * This program is free software. It comes without any warranty, to
  * the extent permitted by applicable law. You can redistribute it
@@ -14,6 +14,8 @@
 #define __XPL_H__
 
 #ifdef _MSC_VER
+#  pragma warning(disable : 4100)
+#  pragma warning(disable : 4127)
 #  pragma warning(disable : 4201)
 #  pragma warning(disable : 4706)
 #endif /* _MSC_VER */
@@ -37,7 +39,7 @@ extern "C" {
 #ifndef XPLVER
 #  define XPLVER_MAJOR	1
 #  define XPLVER_MINOR	0
-#  define XPLVER_PATCH	5
+#  define XPLVER_PATCH	6
 #  define XPLVER ((XPLVER_MAJOR << 24) | (XPLVER_MINOR << 16) | (XPLVER_PATCH))
 #endif /* XPLVER */
 
@@ -110,6 +112,7 @@ typedef enum xpl_status_t {
   XS_NO_COMMENT,            /**< No comment found */
   XS_NO_PARAM,              /**< No param found */
   XS_PARAM_TYPE_ERROR,      /**< Parameter convertion failed */
+  XS_BAD_ESCAPE_FORMAT,     /**< Bad escape format */
   XS_COUNT,
 } xpl_status_t;
 
@@ -146,6 +149,22 @@ typedef struct xpl_func_info_t {
  * @return - Returns non-zero if separator determinated
  */
 typedef int (* xpl_is_separator_func)(unsigned char _c);
+/**
+ * @brief Escape determination functor
+ *
+ * @param[in] _s - Charactor to be determinated
+ * @return - Returns non-zero if escape determinated
+ */
+typedef int (* xpl_is_escape_func)(unsigned char _c);
+
+/**
+ * @brief Escape parser
+ *
+ * @param[in] _d - Pointer to destination buffer
+ * @param[in] _s - Pointer to source buffer
+ * @return - Returns parsed escape charactor count
+ */
+typedef int (* xpl_parse_escape_func)(char** _d, const char** _s);
 
 /**
  * @brief XPL context structure
@@ -176,6 +195,14 @@ typedef struct xpl_context_t {
    * @brief Separator determination functor
    */
   xpl_is_separator_func separator_detect;
+  /**
+   * @brief Escape determination functor
+   */
+  xpl_is_escape_func escape_detect;
+  /**
+   * @brief Escape parser
+   */
+  xpl_parse_escape_func escape_parse;
   /**
    * @brief Pointer to user defined data
    */
@@ -588,7 +615,13 @@ XPLAPI xpl_status_t xpl_pop_string(xpl_context_t* _s, char* _o, int _l) {
   if(_xpl_is_dquote(*(unsigned char*)src)) {
     src++;
     while(!_xpl_is_dquote(*(unsigned char*)src)) {
-      *dst++ = *src++;
+      if(_s->escape_detect && (*_s->escape_detect)(*(unsigned char*)src)) {
+        if(!(*_s->escape_parse)(&dst, &src)) {
+          return XS_BAD_ESCAPE_FORMAT;
+        }
+      } else {
+        *dst++ = *src++;
+      }
       if(dst + 1 - _o > _l) return XS_NO_ENOUGH_BUFFER_SIZE;
     }
     src++;
