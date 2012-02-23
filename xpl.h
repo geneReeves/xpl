@@ -152,7 +152,7 @@ typedef int (* xpl_is_separator_func)(unsigned char _c);
 /**
  * @brief Escape determination functor
  *
- * @param[in] _s - Charactor to be determinated
+ * @param[in] _c - Charactor to be determinated
  * @return - Returns non-zero if escape determinated
  */
 typedef int (* xpl_is_escape_func)(unsigned char _c);
@@ -616,6 +616,7 @@ XPLAPI xpl_status_t xpl_pop_string(xpl_context_t* _s, char* _o, int _l) {
     src++;
     while(!_xpl_is_dquote(*(unsigned char*)src)) {
       if(_s->escape_detect && (*_s->escape_detect)(*(unsigned char*)src)) {
+        xpl_assert(_s->escape_parse);
         if(!(*_s->escape_parse)(&dst, &src)) {
           return XS_BAD_ESCAPE_FORMAT;
         }
