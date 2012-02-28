@@ -1,13 +1,12 @@
-#TODO list
+= TODO list =
 
-= Core =
+== Core ==
 
   * TBD
 
 
-= Extension =
+== Extension ==
 
-Add your content here.  Format your content with:
   * Expression.
   * Variable.
   * Collections.
