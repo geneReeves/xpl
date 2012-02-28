@@ -1,7 +1,7 @@
 /**
  * Author: paladin_t, hellotony521@gmail.com
  * Created: Oct. 14, 2011
- * Last edited: Feb. 23, 2012
+ * Last edited: Feb. 28, 2012
  *
  * This program is free software. It comes without any warranty, to
  * the extent permitted by applicable law. You can redistribute it
@@ -43,26 +43,6 @@ static int _xpl_parse_escape(char** _d, const char** _s) {
         break;
       case 't':
         *(*_d)++ = '\t'; ret++;
-        break;
-      case 'u': {
-          char buf[8];
-          unsigned codepoint = 0;
-          int i = 0;
-          for(i = 0; i < 4; i++) {
-            char c = (*_s)[i];
-            codepoint <<= 4;
-            codepoint += c;
-            if(c >= '0' && c <= '9') codepoint -= '0';
-            else if(c >= 'A' && c <= 'F') codepoint -= 'F';
-            else if(c >= 'a' && c <= 'f') codepoint -= 'f';
-            else return 0;
-          }
-          sprintf(buf, "%d", codepoint);
-          for(i = 0; i < 4; i++)
-            *(*_d)++ = buf[i];
-          (*_s) += 4;
-          ret += 4;
-        }
         break;
       default:
         break;
@@ -129,6 +109,8 @@ int main() {
     xpl.escape_detect = _xpl_is_rsolidus;
     xpl.escape_parse = _xpl_parse_escape;
     xpl_load(&xpl, "if cond1 then test1 3.14 elseif cond2 then test2 \"hello world\" else test3 endif");
+    xpl_run(&xpl);
+    xpl_load(&xpl, "if cond1 then if cond2 3 then test3 elseif cond2 then test3 endif test3 endif test2 \"hello world\"");
     xpl_run(&xpl);
     xpl_unload(&xpl);
   xpl_close(&xpl);
