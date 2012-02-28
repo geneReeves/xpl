@@ -1,7 +1,7 @@
 /**
  * Author: paladin_t, hellotony521@gmail.com
  * Created: Oct. 14, 2011
- * Last edited: Feb. 23, 2012
+ * Last edited: Feb. 28, 2012
  *
  * This program is free software. It comes without any warranty, to
  * the extent permitted by applicable law. You can redistribute it
@@ -37,9 +37,9 @@ extern "C" {
 */
 
 #ifndef XPLVER
-#  define XPLVER_MAJOR	1
-#  define XPLVER_MINOR	0
-#  define XPLVER_PATCH	6
+#  define XPLVER_MAJOR  1
+#  define XPLVER_MINOR  0
+#  define XPLVER_PATCH  7
 #  define XPLVER ((XPLVER_MAJOR << 24) | (XPLVER_MINOR << 16) | (XPLVER_PATCH))
 #endif /* XPLVER */
 
@@ -93,13 +93,20 @@ extern "C" {
 /**
  * @brief Skip meaningless parts, such as comment and blank.
  */
-#ifndef SKIP_MEANINGLESS
-#  define SKIP_MEANINGLESS(s) \
+#ifndef XPL_SKIP_MEANINGLESS
+#  define XPL_SKIP_MEANINGLESS(s) \
   do { \
     while(_xpl_is_squote(*(unsigned char*)_s->cursor) || _xpl_is_blank(*(unsigned char*)_s->cursor)) { \
       _xpl_trim(&(s)->cursor); if(xpl_skip_comment(s) == XS_OK) _xpl_trim(&(s)->cursor); } \
   } while(0)
-#endif /* SKIP_MEANINGLESS */
+#endif /* XPL_SKIP_MEANINGLESS */
+
+/**
+ * @brief Avoid function folding
+ */
+#ifndef XPL_DO_NOTHING
+#  define XPL_DO_NOTHING(s) do { (s)->pfunc_hack += __LINE__; } while(0)
+#endif /* XPL_DO_NOTHING */
 
 /**
  * @brief XPL function execution status
@@ -113,7 +120,7 @@ typedef enum xpl_status_t {
   XS_NO_PARAM,              /**< No param found */
   XS_PARAM_TYPE_ERROR,      /**< Parameter convertion failed */
   XS_BAD_ESCAPE_FORMAT,     /**< Bad escape format */
-  XS_COUNT,
+  XS_COUNT
 } xpl_status_t;
 
 /**
@@ -122,7 +129,7 @@ typedef enum xpl_status_t {
 typedef enum xpl_bool_composing_t {
   XBC_NIL, /**< Assign with a new value directly */
   XBC_OR,  /**< Compose and assign old value OR a new value */
-  XBC_AND, /**< Compose and assign old value AND a new value */
+  XBC_AND  /**< Compose and assign old value AND a new value */
 } xpl_bool_composing_t;
 
 struct xpl_context_t;
@@ -192,6 +199,12 @@ typedef struct xpl_context_t {
     int bool_value;                      /**< Current boolean value */
   };
   /**
+   * @brief Nest logic helper
+   */
+  struct {
+    int if_statement_depth; /**< 'if' statement depth */
+  };
+  /**
    * @brief Separator determination functor
    */
   xpl_is_separator_func separator_detect;
@@ -207,6 +220,10 @@ typedef struct xpl_context_t {
    * @brief Pointer to user defined data
    */
   void* userdata;
+  /**
+   * @brief Dummy function hack
+   */
+  int pfunc_hack;
 } xpl_context_t;
 
 /* ========================================================} */
@@ -391,6 +408,13 @@ XPLINTERNAL xpl_status_t _xpl_core_and(xpl_context_t* _s);
 XPLINTERNAL xpl_status_t _xpl_core_yield(xpl_context_t* _s);
 
 /**
+ * @brief Skips execution body of a 'if' statement
+ *
+ * @param[in] _s - XPL context
+ */
+XPLINTERNAL void _xpl_skip_ifcond_body(xpl_context_t* _s);
+
+/**
  * @brief Determines whether a char is a single quote
  *
  * @param[in] _c - Char to be determined
@@ -493,6 +517,7 @@ XPLAPI xpl_status_t xpl_open(xpl_context_t* _s, xpl_func_info_t* _f, xpl_is_sepa
 
 XPLAPI xpl_status_t xpl_close(xpl_context_t* _s) {
   xpl_assert(_s);
+  printf("XPL closed, pfunc_hack code: %d\n", _s->pfunc_hack);
   memset(_s, 0, sizeof(xpl_context_t));
 
   return XS_OK;
@@ -522,7 +547,7 @@ XPLAPI xpl_status_t xpl_unload(xpl_context_t* _s) {
 
 XPLAPI xpl_status_t xpl_run(xpl_context_t* _s) {
   xpl_status_t ret = XS_OK;
-  xpl_assert(_s && _s->text);
+  xpl_assert(_s && _s->text && "Empty program");
   while(*_s->cursor && ret == XS_OK)
     ret = xpl_step(_s);
 
@@ -533,7 +558,8 @@ XPLAPI xpl_status_t xpl_peek_func(xpl_context_t* _s, xpl_func_info_t** _f) {
   xpl_status_t ret = XS_OK;
   xpl_func_info_t* func = NULL;
   xpl_assert(_s && _s->text && _f);
-  SKIP_MEANINGLESS(_s);
+  XPL_SKIP_MEANINGLESS(_s);
+  *_f = NULL;
   if(_xpl_is_comma(*(unsigned char*)_s->cursor)) {
     _s->cursor++;
   } else {
@@ -552,7 +578,7 @@ XPLAPI xpl_status_t xpl_step(xpl_context_t* _s) {
   if((ret = xpl_peek_func(_s, &func)) != XS_OK) return ret;
   if(!func) return ret;
   _s->cursor += strlen(func->name);
-  SKIP_MEANINGLESS(_s);
+  XPL_SKIP_MEANINGLESS(_s);
   if((ret = func->func(_s)) != XS_OK) return ret;
 
   return ret;
@@ -575,7 +601,7 @@ XPLAPI xpl_status_t xpl_skip_comment(xpl_context_t* _s) {
 XPLAPI xpl_status_t xpl_has_param(xpl_context_t* _s) {
   xpl_func_info_t* func = NULL;
   xpl_assert(_s && _s->text);
-  SKIP_MEANINGLESS(_s);
+  XPL_SKIP_MEANINGLESS(_s);
   if(_s->cursor[0] == '\0') return XS_NO_PARAM;
   xpl_peek_func(_s, &func);
 
@@ -653,6 +679,7 @@ XPLAPI xpl_status_t xpl_push_bool(xpl_context_t* _s, int _b) {
 
 XPLINTERNAL xpl_status_t _xpl_core_if(xpl_context_t* _s) {
   xpl_assert(_s && _s->text);
+  _s->if_statement_depth++;
 
   return XS_OK;
 }
@@ -667,24 +694,27 @@ XPLINTERNAL xpl_status_t _xpl_core_then(xpl_context_t* _s) {
     do {
       if((ret = xpl_peek_func(_s, &func)) != XS_OK) return ret;
       if(!func) continue;
-      if(func->func == _xpl_core_elseif || func->func == _xpl_core_else || func->func == _xpl_core_endif) break;
+      if(func->func == _xpl_core_elseif || func->func == _xpl_core_else) break;
+      else if(func->func == _xpl_core_endif) { _s->if_statement_depth--; break; }
       _s->cursor += strlen(func->name);
-      SKIP_MEANINGLESS(_s);
+      XPL_SKIP_MEANINGLESS(_s);
       if((ret = func->func(_s)) != XS_OK) return ret;
     } while(*_s->cursor);
     do {
       if((ret = xpl_peek_func(_s, &func)) != XS_OK) return ret;
       if(!func) continue;
       _s->cursor += strlen(func->name);
-      if(func->func == _xpl_core_endif) break;
+      if(func->func == _xpl_core_endif) { _s->if_statement_depth--; break; }
     } while(*_s->cursor);
   } else {
     _s->bool_value = 0;
     _s->bool_composing = XBC_NIL;
     do {
+      _xpl_skip_ifcond_body(_s);
       xpl_peek_func(_s, &func);
       if(!func) continue;
-      if(func->func == _xpl_core_elseif || func->func == _xpl_core_else || func->func == _xpl_core_endif) break;
+      if(func->func == _xpl_core_elseif || func->func == _xpl_core_else) break;
+      else if(func->func == _xpl_core_endif) { _s->if_statement_depth--; break; }
       _s->cursor += strlen(func->name);
     } while(*_s->cursor);
   }
@@ -694,18 +724,21 @@ XPLINTERNAL xpl_status_t _xpl_core_then(xpl_context_t* _s) {
 
 XPLINTERNAL xpl_status_t _xpl_core_elseif(xpl_context_t* _s) {
   xpl_assert(_s && _s->text);
+  XPL_DO_NOTHING(_s);
 
   return XS_OK;
 }
 
 XPLINTERNAL xpl_status_t _xpl_core_else(xpl_context_t* _s) {
   xpl_assert(_s && _s->text);
+  XPL_DO_NOTHING(_s);
 
   return XS_OK;
 }
 
 XPLINTERNAL xpl_status_t _xpl_core_endif(xpl_context_t* _s) {
   xpl_assert(_s && _s->text);
+  XPL_DO_NOTHING(_s);
 
   return XS_OK;
 }
@@ -728,6 +761,29 @@ XPLINTERNAL xpl_status_t _xpl_core_yield(xpl_context_t* _s) {
   xpl_assert(_s && _s->text);
 
   return XS_SUSPENT;
+}
+
+void _xpl_skip_ifcond_body(xpl_context_t* _s) {
+  xpl_func_info_t* func = NULL;
+  int lv = _s->if_statement_depth;
+  xpl_assert(_s && _s->text);
+  do {
+    xpl_peek_func(_s, &func);
+    if(!func) {
+      XPL_SKIP_MEANINGLESS(_s);
+      _s->cursor++;
+      while(!_xpl_is_separator(*(unsigned char*)(_s->cursor), _s->separator_detect)) {
+        _s->cursor++;
+      }
+      continue;
+    } else if(func->func == _xpl_core_if) {
+      _s->if_statement_depth++;
+    } else if(func->func == _xpl_core_elseif || func->func == _xpl_core_else || func->func == _xpl_core_endif) {
+      if(_s->if_statement_depth == lv) break;
+      else if(func->func == _xpl_core_endif) _s->if_statement_depth--;
+    }
+    _s->cursor += strlen(func->name);
+  } while(*_s->cursor);
 }
 
 XPLINTERNAL int _xpl_is_squote(unsigned char _c) {
@@ -758,7 +814,7 @@ XPLINTERNAL int _xpl_is_separator(unsigned char _c, xpl_is_separator_func _is) {
   return _xpl_is_blank(_c) || _xpl_is_comma(_c) ||
     _xpl_is_exclamation(_c) || _xpl_is_colon(_c) ||
     _xpl_is_squote(_c) || _xpl_is_dquote(_c) ||
-	(_is ? _is(_c) : 0);
+        (_is ? _is(_c) : 0);
 }
 
 XPLINTERNAL int _xpl_trim(const char** _c) {
