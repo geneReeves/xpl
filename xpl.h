@@ -1,7 +1,7 @@
 /**
  * Author: paladin_t, hellotony521@gmail.com
  * Created: Oct. 14, 2011
- * Last edited: Feb. 28, 2012
+ * Last edited: Apr. 9, 2012
  *
  * This program is free software. It comes without any warranty, to
  * the extent permitted by applicable law. You can redistribute it
@@ -39,7 +39,7 @@ extern "C" {
 #ifndef XPLVER
 #  define XPLVER_MAJOR  1
 #  define XPLVER_MINOR  0
-#  define XPLVER_PATCH  7
+#  define XPLVER_PATCH  10
 #  define XPLVER ((XPLVER_MAJOR << 24) | (XPLVER_MINOR << 16) | (XPLVER_PATCH))
 #endif /* XPLVER */
 
@@ -95,10 +95,10 @@ extern "C" {
  */
 #ifndef XPL_SKIP_MEANINGLESS
 #  define XPL_SKIP_MEANINGLESS(s) \
-  do { \
-    while(_xpl_is_squote(*(unsigned char*)_s->cursor) || _xpl_is_blank(*(unsigned char*)_s->cursor)) { \
-      _xpl_trim(&(s)->cursor); if(xpl_skip_comment(s) == XS_OK) _xpl_trim(&(s)->cursor); } \
-  } while(0)
+    do { \
+      while(_xpl_is_squote(*(unsigned char*)_s->cursor) || _xpl_is_blank(*(unsigned char*)_s->cursor)) { \
+        _xpl_trim(&(s)->cursor); if(xpl_skip_comment(s) == XS_OK) _xpl_trim(&(s)->cursor); } \
+    } while(0)
 #endif /* XPL_SKIP_MEANINGLESS */
 
 /**
@@ -180,30 +180,30 @@ typedef struct xpl_context_t {
   /**
    * @brief Registered interfaces
    */
-  struct {
+  /* struct { */
     xpl_func_info_t* funcs; /**< Pointer to array of registered interfaces */
     int funcs_count;        /**< Count of registered interfaces */
-  };
+  /* }; */
   /**
    * @brief Script source code indicator
    */
-  struct {
+  /* struct { */
     const char* text;   /**< Script source text */
     const char* cursor; /**< Script execution cursor */
-  };
+  /* }; */
   /**
    * @brief Boolean value
    */
-  struct {
+  /* struct { */
     xpl_bool_composing_t bool_composing; /**< Boolean value composing type */
     int bool_value;                      /**< Current boolean value */
-  };
+  /* }; */
   /**
    * @brief Nest logic helper
    */
-  struct {
+  /* struct { */
     int if_statement_depth; /**< 'if' statement depth */
-  };
+  /* }; */
   /**
    * @brief Separator determination functor
    */
@@ -418,42 +418,42 @@ XPLINTERNAL void _xpl_skip_ifcond_body(xpl_context_t* _s);
  * @brief Determines whether a char is a single quote
  *
  * @param[in] _c - Char to be determined
- * @return Returns non-zero if matching
+ * @return - Returns non-zero if matching
  */
 XPLINTERNAL int _xpl_is_squote(unsigned char _c);
 /**
  * @brief Determines whether a char is a double quote
  *
  * @param[in] _c - Char to be determined
- * @return Returns non-zero if matching
+ * @return - Returns non-zero if matching
  */
 XPLINTERNAL int _xpl_is_dquote(unsigned char _c);
 /**
  * @brief Determines whether a char is a comma
  *
  * @param[in] _c - Char to be determined
- * @return Returns non-zero if matching
+ * @return - Returns non-zero if matching
  */
 XPLINTERNAL int _xpl_is_comma(unsigned char _c);
 /**
  * @brief Determines whether a char is an exclamation
  *
  * @param[in] _c - Char to be determined
- * @return Returns non-zero if matching
+ * @return - Returns non-zero if matching
  */
 XPLINTERNAL int _xpl_is_exclamation(unsigned char _c);
 /**
  * @brief Determines whether a char is a colon
  *
  * @param[in] _c - Char to be determined
- * @return Returns non-zero if matching
+ * @return - Returns non-zero if matching
  */
 XPLINTERNAL int _xpl_is_colon(unsigned char _c);
 /**
  * @brief Determines whether a char is a blank
  *
  * @param[in] _c - Char to be determined
- * @return Returns non-zero if matching
+ * @return - Returns non-zero if matching
  */
 XPLINTERNAL int _xpl_is_blank(unsigned char _c);
 /**
@@ -461,7 +461,7 @@ XPLINTERNAL int _xpl_is_blank(unsigned char _c);
  *
  * @param[in] _c  - Char to be determined
  * @param[in] _is - Separator determination functor
- * @return Returns non-zero if matching
+ * @return - Returns non-zero if matching
  */
 XPLINTERNAL int _xpl_is_separator(unsigned char _c, xpl_is_separator_func _is);
 /**
@@ -557,15 +557,15 @@ XPLAPI xpl_status_t xpl_run(xpl_context_t* _s) {
 XPLAPI xpl_status_t xpl_peek_func(xpl_context_t* _s, xpl_func_info_t** _f) {
   xpl_status_t ret = XS_OK;
   xpl_func_info_t* func = NULL;
-  xpl_assert(_s && _s->text && _f);
+  xpl_assert(_s && _s->text);
   XPL_SKIP_MEANINGLESS(_s);
-  *_f = NULL;
+  if(_f) *_f = NULL;
   if(_xpl_is_comma(*(unsigned char*)_s->cursor)) {
     _s->cursor++;
   } else {
     func = (xpl_func_info_t*)bsearch(_s->cursor, _s->funcs, _s->funcs_count, sizeof(xpl_func_info_t), _xpl_func_info_sch_cmp);
     if(!func) return XS_ERR;
-    *_f = func;
+    if(_f) *_f = func;
   }
 
   return ret;
@@ -643,9 +643,8 @@ XPLAPI xpl_status_t xpl_pop_string(xpl_context_t* _s, char* _o, int _l) {
     while(!_xpl_is_dquote(*(unsigned char*)src)) {
       if(_s->escape_detect && (*_s->escape_detect)(*(unsigned char*)src)) {
         xpl_assert(_s->escape_parse);
-        if(!(*_s->escape_parse)(&dst, &src)) {
+        if(!(*_s->escape_parse)(&dst, &src))
           return XS_BAD_ESCAPE_FORMAT;
-        }
       } else {
         *dst++ = *src++;
       }
@@ -653,7 +652,7 @@ XPLAPI xpl_status_t xpl_pop_string(xpl_context_t* _s, char* _o, int _l) {
     }
     src++;
   } else {
-    while(!_xpl_is_separator(*(unsigned char*)src, _s->separator_detect)) {
+    while(!_xpl_is_separator(*(unsigned char*)src, _s->separator_detect) && *src != '\0') {
       *dst++ = *src++;
       if(dst + 1 - _o > _l) return XS_NO_ENOUGH_BUFFER_SIZE;
     }
@@ -772,9 +771,8 @@ void _xpl_skip_ifcond_body(xpl_context_t* _s) {
     if(!func) {
       XPL_SKIP_MEANINGLESS(_s);
       _s->cursor++;
-      while(!_xpl_is_separator(*(unsigned char*)(_s->cursor), _s->separator_detect)) {
+      while(!_xpl_is_separator(*(unsigned char*)(_s->cursor), _s->separator_detect))
         _s->cursor++;
-      }
       continue;
     } else if(func->func == _xpl_core_if) {
       _s->if_statement_depth++;
@@ -814,7 +812,7 @@ XPLINTERNAL int _xpl_is_separator(unsigned char _c, xpl_is_separator_func _is) {
   return _xpl_is_blank(_c) || _xpl_is_comma(_c) ||
     _xpl_is_exclamation(_c) || _xpl_is_colon(_c) ||
     _xpl_is_squote(_c) || _xpl_is_dquote(_c) ||
-        (_is ? _is(_c) : 0);
+    (_is ? _is(_c) : 0);
 }
 
 XPLINTERNAL int _xpl_trim(const char** _c) {
