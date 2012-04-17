@@ -1,7 +1,7 @@
 /**
  * Author: paladin_t, hellotony521@gmail.com
  * Created: Oct. 14, 2011
- * Last edited: Apr. 9, 2012
+ * Last edited: Apr. 17, 2012
  *
  * This program is free software. It comes without any warranty, to
  * the extent permitted by applicable law. You can redistribute it
@@ -39,7 +39,7 @@ extern "C" {
 #ifndef XPLVER
 #  define XPLVER_MAJOR  1
 #  define XPLVER_MINOR  0
-#  define XPLVER_PATCH  10
+#  define XPLVER_PATCH  12
 #  define XPLVER ((XPLVER_MAJOR << 24) | (XPLVER_MINOR << 16) | (XPLVER_PATCH))
 #endif /* XPLVER */
 
@@ -70,6 +70,9 @@ extern "C" {
  */
 #ifndef XPL_FUNC_REGISTER
 #  define XPL_FUNC_REGISTER
+/**< Begin an empty interface declaration */
+#  define XPL_FUNC_BEGIN_EMPTY(a) \
+    static xpl_func_info_t a[] = {
 /**< Begin an interface declaration */
 #  define XPL_FUNC_BEGIN(a) \
     static xpl_func_info_t a[] = { \
@@ -220,6 +223,10 @@ typedef struct xpl_context_t {
    * @brief Pointer to user defined data
    */
   void* userdata;
+  /**
+   * @brief Use pfunc hacking if non-zero
+   */
+  int use_hack_pfunc;
   /**
    * @brief Dummy function hack
    */
@@ -511,13 +518,15 @@ XPLAPI xpl_status_t xpl_open(xpl_context_t* _s, xpl_func_info_t* _f, xpl_is_sepa
     _s->funcs_count++;
   qsort(_f, _s->funcs_count, sizeof(xpl_func_info_t), _xpl_func_info_srt_cmp);
   _s->separator_detect = _is;
+  _s->use_hack_pfunc = 1;
 
   return XS_OK;
 }
 
 XPLAPI xpl_status_t xpl_close(xpl_context_t* _s) {
   xpl_assert(_s);
-  printf("XPL closed, pfunc_hack code: %d\n", _s->pfunc_hack);
+  if(_s->use_hack_pfunc)
+    printf("XPL closed, pfunc_hack code: %d\n", _s->pfunc_hack);
   memset(_s, 0, sizeof(xpl_context_t));
 
   return XS_OK;
