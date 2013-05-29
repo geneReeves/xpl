@@ -1,7 +1,7 @@
 /**
  * Author: paladin_t, hellotony521@gmail.com
  * Created: Oct. 14, 2011
- * Last edited: June. 7, 2012
+ * Last edited: May. 29, 2013
  *
  * This program is free software. It comes without any warranty, to
  * the extent permitted by applicable law. You can redistribute it
@@ -39,41 +39,40 @@ extern "C" {
 #ifndef XPLVER
 #  define XPLVER_MAJOR  1
 #  define XPLVER_MINOR  0
-#  define XPLVER_PATCH  14
+#  define XPLVER_PATCH  15
 #  define XPLVER ((XPLVER_MAJOR << 24) | (XPLVER_MINOR << 16) | (XPLVER_PATCH))
-#endif /* XPLVER */
+#endif /* !XPLVER */
 
 #ifndef XPLINTERNAL
 #  define XPLINTERNAL static
-#endif /* XPLINTERNAL */
+#endif /* !XPLINTERNAL */
 #ifndef XPLAPI
 #  define XPLAPI static
-#endif /* XPLAPI */
+#endif /* !XPLAPI */
 
 #ifndef NULL
 #  define NULL 0
-#endif /* NULL */
+#endif /* !NULL */
 
 #ifndef _countof
 #  define _countof(a) (sizeof(a) / sizeof(*(a)))
-#endif /* _countof */
+#endif /* !_countof */
 
 #ifndef xpl_assert
 #  define xpl_assert(e) assert(e)
-#endif /* xpl_assert */
+#endif /* !xpl_assert */
 
 /**
  * @brief XPL scripting programming interface registering macros
- * @note The interfaces are storaged in a common array, you could put
- *  these macros at global or local scopes to make your customized
- *  interfaces.
+ * @note The interfaces are storaged in a common array, you could put these
+ *  macros at global or local scopes to make your customized interfaces.
  */
 #ifndef XPL_FUNC_REGISTER
 #  define XPL_FUNC_REGISTER
-/**< Begin an empty interface declaration */
+/**< Begins an interface declaration without buildin interfaces. */
 #  define XPL_FUNC_BEGIN_EMPTY(a) \
     static xpl_func_info_t a[] = {
-/**< Begin an interface declaration */
+/**< Begins an interface declaration with buildin interfaces. */
 #  define XPL_FUNC_BEGIN(a) \
     static xpl_func_info_t a[] = { \
       { "if", _xpl_core_if }, \
@@ -84,17 +83,17 @@ extern "C" {
       { "or", _xpl_core_or }, \
       { "and", _xpl_core_and }, \
       { "yield", _xpl_core_yield },
-/**< Declare an interface */
+/**< Declares an interface. */
 #  define XPL_FUNC_ADD(n, f) \
       { n, f },
-/**< End an interface declaration */
+/**< Ends an interface declaration. */
 #  define XPL_FUNC_END \
       { NULL, NULL }, \
     };
-#endif /* XPL_FUNC_REGISTER */
+#endif /* !XPL_FUNC_REGISTER */
 
 /**
- * @brief Skip meaningless parts, such as comment and blank.
+ * @brief Skips meaningless parts, such as comment and blank.
  */
 #ifndef XPL_SKIP_MEANINGLESS
 #  define XPL_SKIP_MEANINGLESS(s) \
@@ -102,135 +101,134 @@ extern "C" {
       while(_xpl_is_squote(*(unsigned char*)(s)->cursor) || _xpl_is_blank(*(unsigned char*)(s)->cursor)) { \
         _xpl_trim(&(s)->cursor); if(xpl_skip_comment(s) == XS_OK) _xpl_trim(&(s)->cursor); } \
     } while(0)
-#endif /* XPL_SKIP_MEANINGLESS */
+#endif /* !XPL_SKIP_MEANINGLESS */
 
 /**
- * @brief Avoid function folding
+ * @brief Avoids function folding optimization during compiling time.
  */
 #ifndef XPL_DO_NOTHING
 #  define XPL_DO_NOTHING(s) do { (s)->pfunc_hack += __LINE__; } while(0)
-#endif /* XPL_DO_NOTHING */
+#endif /* !XPL_DO_NOTHING */
 
 /**
- * @brief XPL function execution status
+ * @brief XPL function execution status.
  */
 typedef enum xpl_status_t {
-  XS_OK,                    /**< Totally OK */
-  XS_SUSPENT,               /**< Suspent */
-  XS_ERR,                   /**< Some error occured */
-  XS_NO_ENOUGH_BUFFER_SIZE, /**< String buffer too small */
-  XS_NO_COMMENT,            /**< No comment found */
-  XS_NO_PARAM,              /**< No param found */
-  XS_PARAM_TYPE_ERROR,      /**< Parameter convertion failed */
-  XS_BAD_ESCAPE_FORMAT,     /**< Bad escape format */
+  XS_OK,                    /**< Totally OK. */
+  XS_SUSPENT,               /**< Suspent. */
+  XS_ERR,                   /**< Some error occured. */
+  XS_NO_ENOUGH_BUFFER_SIZE, /**< String buffer too small. */
+  XS_NO_COMMENT,            /**< No comment found. */
+  XS_NO_PARAM,              /**< No param found. */
+  XS_PARAM_TYPE_ERROR,      /**< Parameter convertion failed. */
+  XS_BAD_ESCAPE_FORMAT,     /**< Bad escape format. */
   XS_COUNT
 } xpl_status_t;
 
 /**
- * @brief Boolean value composing type
+ * @brief Boolean value composing type.
  */
 typedef enum xpl_bool_composing_t {
-  XBC_NIL, /**< Assign with a new value directly */
-  XBC_OR,  /**< Compose and assign old value OR a new value */
-  XBC_AND  /**< Compose and assign old value AND a new value */
+  XBC_NIL, /**< Assigns with a new value directly. */
+  XBC_OR,  /**< Composes and assigns old value OR a new value. */
+  XBC_AND  /**< Composes and assigns old value AND a new value. */
 } xpl_bool_composing_t;
 
 struct xpl_context_t;
 
 /**
- * @brief XPL scripting programming interface signature
+ * @brief XPL scripting programming interface signature.
  *
- * @param[in] _s - XPL context
+ * @param[in] _s - XPL context.
  */
 typedef xpl_status_t (* xpl_func_t)(struct xpl_context_t* _s);
 
 /**
- * @brief XPL scripting programming interface information
+ * @brief XPL scripting programming interface information.
  */
 typedef struct xpl_func_info_t {
-  const char* name; /**< Interface name */
-  xpl_func_t func;  /**< Pointer to interface function */
+  const char* name; /**< Interface name. */
+  xpl_func_t func;  /**< Pointer to interface function. */
 } xpl_func_info_t;
 
 /**
- * @brief Separator determination functor
+ * @brief Separator determination functor.
  *
- * @param[in] _c - Charactor to be determinated
- * @return - Returns non-zero if separator determinated
+ * @param[in] _c - Charactor to be determinated.
+ * @return - Returns non-zero if separator determinated.
  */
 typedef int (* xpl_is_separator_func)(unsigned char _c);
 /**
- * @brief Escape determination functor
+ * @brief Escape determination functor.
  *
- * @param[in] _c - Charactor to be determinated
- * @return - Returns non-zero if escape determinated
+ * @param[in] _c - Charactor to be determinated.
+ * @return - Returns non-zero if escape determinated.
  */
 typedef int (* xpl_is_escape_func)(unsigned char _c);
 
 /**
- * @brief Escape parser
+ * @brief Escape parser.
  *
- * @param[in] _d - Pointer to destination buffer
- * @param[in] _s - Pointer to source buffer
- * @return - Returns parsed escape charactor count
+ * @param[in] _d - Pointer to destination buffer.
+ * @param[in] _s - Pointer to source buffer.
+ * @return - Returns parsed escape charactor count.
  */
 typedef int (* xpl_parse_escape_func)(char** _d, const char** _s);
 
 /**
- * @brief XPL context structure
+ * @brief XPL context structure.
  */
 typedef struct xpl_context_t {
   /**
-   * @brief Registered interfaces
+   * @brief Registered interfaces.
    */
-  /* struct { */
-    xpl_func_info_t* funcs; /**< Pointer to array of registered interfaces */
-    int funcs_count;        /**< Count of registered interfaces */
-  /* }; */
+  /* {===== */
+    xpl_func_info_t* funcs; /**< Pointer to array of registered interfaces. */
+    int funcs_count;        /**< Count of registered interfaces. */
+  /* =====} */
   /**
-   * @brief Script source code indicator
+   * @brief Script source code indicator.
    */
-  /* struct { */
-    const char* text;   /**< Script source text */
-    const char* cursor; /**< Script execution cursor */
-  /* }; */
+  /* {===== */
+    const char* text;   /**< Script source text. */
+    const char* cursor; /**< Script execution cursor. */
+  /* =====} */
   /**
-   * @brief Boolean value
+   * @brief Boolean value.
    */
-  /* struct { */
-    xpl_bool_composing_t bool_composing; /**< Boolean value composing type */
-    int bool_value;                      /**< Current boolean value */
-  /* }; */
+  /* {===== */
+    xpl_bool_composing_t bool_composing; /**< Boolean value composing type. */
+    int bool_value;                      /**< Current boolean value. */
+  /* =====} */
   /**
-   * @brief Nest logic helper
+   * @brief Nest logic helper.
    */
-  /* struct { */
-    int if_statement_depth; /**< 'if' statement depth */
-  /* }; */
+  /* {===== */
+    int if_statement_depth; /**< 'if' statement depth. */
+  /* =====} */
   /**
-   * @brief Separator determination functor
+   * @brief Separator determination functor.
    */
   xpl_is_separator_func separator_detect;
   /**
-   * @brief Escape determination functor
+   * @brief Escape determination functor.
    */
   xpl_is_escape_func escape_detect;
   /**
-   * @brief Escape parser
+   * @brief Escape parser.
    */
   xpl_parse_escape_func escape_parse;
   /**
-   * @brief Pointer to user defined data
+   * @brief Pointer to user defined data.
    */
   void* userdata;
   /**
-   * @brief Use pfunc hacking if non-zero
+   * @brief Used to avoids function folding optimization during compiling time.
    */
-  int use_hack_pfunc;
-  /**
-   * @brief Dummy function hack
-   */
-  int pfunc_hack;
+  /* {===== */
+    int use_hack_pfunc; /**< Use pfunc hacking if non-zero. */
+    int pfunc_hack;     /**< Dummy function hack. */
+  /* =====} */
 } xpl_context_t;
 
 /* ========================================================} */
@@ -241,111 +239,120 @@ typedef struct xpl_context_t {
 */
 
 /**
- * @brief Opens an XPL context
+ * @brief Opens an XPL context.
  *
- * @param[in] _s  - XPL context
- * @param[in] _f  - Pointer to XPL scripting interface array
- * @param[in] _is - Separator determination functor
- * @return - Returns execution status
+ * @param[in] _s  - XPL context.
+ * @param[in] _f  - Pointer to XPL scripting interface array.
+ * @param[in] _is - Separator determination functor.
+ * @return - Returns execution status.
  */
 XPLAPI xpl_status_t xpl_open(xpl_context_t* _s, xpl_func_info_t* _f, xpl_is_separator_func _is);
 /**
- * @brief Closes an XPL context
+ * @brief Closes an XPL context.
  *
- * @param[in] _s - XPL context
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status.
  */
 XPLAPI xpl_status_t xpl_close(xpl_context_t* _s);
 
 /**
- * @brief Loads a script
+ * @brief Loads a script.
  *
- * @param[in] _s - XPL context
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status.
  */
 XPLAPI xpl_status_t xpl_load(xpl_context_t* _s, const char* _t);
 /**
- * @brief Reloads current script, set execution cursor to begin point.
+ * @brief Reloads current script, set execution cursor to the beginning.
  *
- * @param[in] _s - XPL context
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status.
  */
 XPLAPI xpl_status_t xpl_reload(xpl_context_t* _s);
 /**
- * @brief Unloads a script
+ * @brief Unloads a script.
  *
- * @param[in] _s - XPL context
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status.
  */
 XPLAPI xpl_status_t xpl_unload(xpl_context_t* _s);
 
 /**
- * @brief Runs a script
+ * @brief Runs a script.
  *
- * @param[in] _s - XPL context
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status.
  */
 XPLAPI xpl_status_t xpl_run(xpl_context_t* _s);
 /**
- * @brief Tries to peek one function
+ * @brief Tries to peek one function.
  *
- * @param[in] _s - XPL context
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status.
  */
 XPLAPI xpl_status_t xpl_peek_func(xpl_context_t* _s, xpl_func_info_t** _f);
 /**
- * @brief Runs a single step
+ * @brief Runs a single step.
  *
- * @param[in] _s - XPL context
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status.
  */
 XPLAPI xpl_status_t xpl_step(xpl_context_t* _s);
 
 /**
- * @brief Skips a piece of comment
+ * @brief Skips a piece of comment.
  *
- * @param[in] _s - XPL context
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status.
  */
 XPLAPI xpl_status_t xpl_skip_comment(xpl_context_t* _s);
 /**
- * @brief Determines whether there's a parameter in current XPL context at cursor
+ * @brief Determines whether there's a parameter in current XPL context at
+ *  cursor point.
  *
- * @param[in] _s - XPL context
- * @return - Returns execution status, XS_OK if there's a parameter, or XS_NO_PARAM if there's not.
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status, XS_OK if there's a parameter, or
+ *  XS_NO_PARAM if not.
  */
 XPLAPI xpl_status_t xpl_has_param(xpl_context_t* _s);
 /**
- * @brief Pops a long integer parameter from XPL context
+ * @brief Skips a string parameter from XPL context.
  *
- * @param[in] _s  - XPL context
- * @param[out] _o - Destination buffer
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status, XS_OK if succeed.
+ */
+XPLAPI xpl_status_t xpl_skip_string(xpl_context_t* _s);
+/**
+ * @brief Pops a long integer parameter from XPL context.
+ *
+ * @param[in] _s  - XPL context.
+ * @param[out] _o - Destination buffer.
+ * @return - Returns execution status.
  */
 XPLAPI xpl_status_t xpl_pop_long(xpl_context_t* _s, long* _o);
 /**
- * @brief Pops a double float parameter from XPL context
+ * @brief Pops a double float parameter from XPL context.
  *
- * @param[in] _s  - XPL context
- * @param[out] _o - Destination buffer
- * @return - Returns execution status
+ * @param[in] _s  - XPL context.
+ * @param[out] _o - Destination buffer.
+ * @return - Returns execution status.
  */
 XPLAPI xpl_status_t xpl_pop_double(xpl_context_t* _s, double* _o);
 /**
- * @brief Pops a string parameter from XPL context
+ * @brief Pops a string parameter from XPL context.
  *
- * @param[in] _s  - XPL context
- * @param[out] _o - Destination buffer
- * @param[in] _l  - Destination buffer size
- * @return - Returns execution status
+ * @param[in] _s  - XPL context.
+ * @param[out] _o - Destination buffer.
+ * @param[in] _l  - Destination buffer size.
+ * @return - Returns execution status.
  */
 XPLAPI xpl_status_t xpl_pop_string(xpl_context_t* _s, char* _o, int _l);
 /**
- * @brief Pushes a boolean value to XPL context
+ * @brief Pushes a boolean value to XPL context.
  *
- * @param[in] _s - XPL context
- * @param[in] _b - Boolean value
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @param[in] _b - Boolean value.
+ * @return - Returns execution status.
  */
 XPLAPI xpl_status_t xpl_push_bool(xpl_context_t* _s, int _b);
 
@@ -353,153 +360,155 @@ XPLAPI xpl_status_t xpl_push_bool(xpl_context_t* _s, int _b);
  * @brief Scripting programming interface:
  *   'if' statement, dummy function.
  *
- * @param[in] _s - XPL context
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status.
  */
 XPLINTERNAL xpl_status_t _xpl_core_if(xpl_context_t* _s);
 /**
  * @brief Scripting programming interface:
  *   'then' statement, main logic about 'if-then-elseif-else-endif'.
  *
- * @param[in] _s - XPL context
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status.
  */
 XPLINTERNAL xpl_status_t _xpl_core_then(xpl_context_t* _s);
 /**
  * @brief Scripting programming interface:
  *   'elseif' statement, dummy function.
  *
- * @param[in] _s - XPL context
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status.
  */
 XPLINTERNAL xpl_status_t _xpl_core_elseif(xpl_context_t* _s);
 /**
  * @brief Scripting programming interface:
  *   'else' statement, dummy function.
  *
- * @param[in] _s - XPL context
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status.
  */
 XPLINTERNAL xpl_status_t _xpl_core_else(xpl_context_t* _s);
 /**
  * @brief Scripting programming interface:
  *   'endif' statement, dummy function.
  *
- * @param[in] _s - XPL context
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status.
  */
 XPLINTERNAL xpl_status_t _xpl_core_endif(xpl_context_t* _s);
 /**
  * @brief Scripting programming interface:
  *   'or' statement, set current boolean composing type as OR.
  *
- * @param[in] _s - XPL context
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status.
  */
 XPLINTERNAL xpl_status_t _xpl_core_or(xpl_context_t* _s);
 /**
  * @brief Scripting programming interface:
  *   'and' statement, set current boolean composing type as AND.
  *
- * @param[in] _s - XPL context
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status.
  */
 XPLINTERNAL xpl_status_t _xpl_core_and(xpl_context_t* _s);
 /**
  * @brief Scripting programming interface:
  *   'yield' statement, suspend current execution.
  *
- * @param[in] _s - XPL context
- * @return - Returns execution status
+ * @param[in] _s - XPL context.
+ * @return - Returns execution status.
  */
 XPLINTERNAL xpl_status_t _xpl_core_yield(xpl_context_t* _s);
 
 /**
- * @brief Skips execution body of a 'if' statement
+ * @brief Skips execution body of an 'if' statement.
  *
- * @param[in] _s - XPL context
+ * @param[in] _s - XPL context.
  */
 XPLINTERNAL void _xpl_skip_ifcond_body(xpl_context_t* _s);
 
 /**
- * @brief Determines whether a char is a single quote
+ * @brief Determines whether a char is a single quote.
  *
- * @param[in] _c - Char to be determined
- * @return - Returns non-zero if matching
+ * @param[in] _c - Char to be determined.
+ * @return - Returns non-zero if matching.
  */
 XPLINTERNAL int _xpl_is_squote(unsigned char _c);
 /**
- * @brief Determines whether a char is a double quote
+ * @brief Determines whether a char is a double quote.
  *
- * @param[in] _c - Char to be determined
- * @return - Returns non-zero if matching
+ * @param[in] _c - Char to be determined.
+ * @return - Returns non-zero if matching.
  */
 XPLINTERNAL int _xpl_is_dquote(unsigned char _c);
 /**
- * @brief Determines whether a char is a comma
+ * @brief Determines whether a char is a comma.
  *
- * @param[in] _c - Char to be determined
- * @return - Returns non-zero if matching
+ * @param[in] _c - Char to be determined.
+ * @return - Returns non-zero if matching.
  */
 XPLINTERNAL int _xpl_is_comma(unsigned char _c);
 /**
- * @brief Determines whether a char is an exclamation
+ * @brief Determines whether a char is an exclamation.
  *
- * @param[in] _c - Char to be determined
- * @return - Returns non-zero if matching
+ * @param[in] _c - Char to be determined.
+ * @return - Returns non-zero if matching.
  */
 XPLINTERNAL int _xpl_is_exclamation(unsigned char _c);
 /**
- * @brief Determines whether a char is a colon
+ * @brief Determines whether a char is a colon.
  *
- * @param[in] _c - Char to be determined
- * @return - Returns non-zero if matching
+ * @param[in] _c - Char to be determined.
+ * @return - Returns non-zero if matching.
  */
 XPLINTERNAL int _xpl_is_colon(unsigned char _c);
 /**
- * @brief Determines whether a char is a blank
+ * @brief Determines whether a char is a blank.
  *
- * @param[in] _c - Char to be determined
- * @return - Returns non-zero if matching
+ * @param[in] _c - Char to be determined.
+ * @return - Returns non-zero if matching.
  */
 XPLINTERNAL int _xpl_is_blank(unsigned char _c);
 /**
- * @brief Determines whether a char is a separator
+ * @brief Determines whether a char is a separator.
  *
- * @param[in] _c  - Char to be determined
- * @param[in] _is - Separator determination functor
- * @return - Returns non-zero if matching
+ * @param[in] _c  - Char to be determined.
+ * @param[in] _is - Separator determination functor.
+ * @return - Returns non-zero if matching.
  */
 XPLINTERNAL int _xpl_is_separator(unsigned char _c, xpl_is_separator_func _is);
 /**
- * @brief Trims extra chars
+ * @brief Trims extra chars.
  *
- * @param[in][out] - String to be trimmed
- * @return - Returns count of trimmed chars
+ * @param[in][out] - String to be trimmed.
+ * @return - Returns count of trimmed chars.
  */
 XPLINTERNAL int _xpl_trim(const char** _c);
 /**
- * @brief Compires two strings
+ * @brief Compires two strings.
  *
- * @param[in] _s - Source string
- * @param[in] _d - Destination buffer
- * @return - Returns 1 if _s > _d, -1 if _s < _d, 0 if _s = _d
+ * @param[in] _s - Source string.
+ * @param[in] _d - Destination buffer.
+ * @return - Returns 1 if _s > _d, -1 if _s < _d, 0 if _s = _d.
  */
 XPLINTERNAL int _xpl_strcmp(const char* _s, const char* _d);
 /**
- * @brief Compires scripting programming interface information in quick sorting
+ * @brief Compires scripting programming interface information in quick
+ *  sorting.
  *
- * @param[in] _l - First interface information
- * @param[in] _r - Second interface information
- * @return - Returns 1 if _l > _r, -1 if _l < _r, 0 if _l = _r
+ * @param[in] _l - First interface information.
+ * @param[in] _r - Second interface information.
+ * @return - Returns 1 if _l > _r, -1 if _l < _r, 0 if _l = _r.
  */
 XPLINTERNAL int _xpl_func_info_srt_cmp(const void* _l, const void* _r);
 /**
- * @brief Compires scripting programming interface information in binary searching
+ * @brief Compires scripting programming interface information in binary
+ *  searching.
  *
- * @param[in] _k - Searching key
- * @param[in] _i - Interface information
- * @return - Returns 1 if _k > _i, -1 if _k < _i, 0 if _k = _i
+ * @param[in] _k - Searching key.
+ * @param[in] _i - Interface information.
+ * @return - Returns 1 if _k > _i, -1 if _k < _i, 0 if _k = _i.
  */
 XPLINTERNAL int _xpl_func_info_sch_cmp(const void* _k, const void* _i);
 
@@ -615,6 +624,24 @@ XPLAPI xpl_status_t xpl_has_param(xpl_context_t* _s) {
   xpl_peek_func(_s, &func);
 
   return ((_xpl_is_comma(*(unsigned char*)_s->cursor) || func) ? XS_NO_PARAM : XS_OK);
+}
+
+XPLAPI xpl_status_t xpl_skip_string(xpl_context_t* _s) {
+  const char* src = NULL;
+  xpl_assert(_s && _s->text);
+  src = _s->cursor;
+  if(_xpl_is_dquote(*(unsigned char*)src)) {
+    src++;
+    while(!_xpl_is_dquote(*(unsigned char*)src))
+      src++;
+    src++;
+  } else {
+    while(!_xpl_is_separator(*(unsigned char*)src, _s->separator_detect) && *src != '\0')
+      src++;
+  }
+  _s->cursor = src;
+
+  return XS_OK;
 }
 
 XPLAPI xpl_status_t xpl_pop_long(xpl_context_t* _s, long* _o) {
@@ -868,4 +895,4 @@ XPLINTERNAL int _xpl_func_info_sch_cmp(const void* _k, const void* _i) {
 }
 #endif /* __cplusplus */
 
-#endif /* __XPL_H__ */
+#endif /* !__XPL_H__ */
