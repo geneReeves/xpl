@@ -1,7 +1,7 @@
 /**
  * Author: paladin_t, hellotony521@gmail.com
  * Created: Oct. 14, 2011
- * Last edited: Apr. 17, 2012
+ * Last edited: June. 7, 2012
  *
  * This program is free software. It comes without any warranty, to
  * the extent permitted by applicable law. You can redistribute it
@@ -39,7 +39,7 @@ extern "C" {
 #ifndef XPLVER
 #  define XPLVER_MAJOR  1
 #  define XPLVER_MINOR  0
-#  define XPLVER_PATCH  12
+#  define XPLVER_PATCH  14
 #  define XPLVER ((XPLVER_MAJOR << 24) | (XPLVER_MINOR << 16) | (XPLVER_PATCH))
 #endif /* XPLVER */
 
@@ -99,7 +99,7 @@ extern "C" {
 #ifndef XPL_SKIP_MEANINGLESS
 #  define XPL_SKIP_MEANINGLESS(s) \
     do { \
-      while(_xpl_is_squote(*(unsigned char*)_s->cursor) || _xpl_is_blank(*(unsigned char*)_s->cursor)) { \
+      while(_xpl_is_squote(*(unsigned char*)(s)->cursor) || _xpl_is_blank(*(unsigned char*)(s)->cursor)) { \
         _xpl_trim(&(s)->cursor); if(xpl_skip_comment(s) == XS_OK) _xpl_trim(&(s)->cursor); } \
     } while(0)
 #endif /* XPL_SKIP_MEANINGLESS */
@@ -819,7 +819,7 @@ XPLINTERNAL int _xpl_is_blank(unsigned char _c) {
 
 XPLINTERNAL int _xpl_is_separator(unsigned char _c, xpl_is_separator_func _is) {
   return _xpl_is_blank(_c) || _xpl_is_comma(_c) ||
-    _xpl_is_exclamation(_c) || _xpl_is_colon(_c) ||
+    _xpl_is_colon(_c) ||
     _xpl_is_squote(_c) || _xpl_is_dquote(_c) ||
     (_is ? _is(_c) : 0);
 }
